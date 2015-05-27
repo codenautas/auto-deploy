@@ -1,7 +1,17 @@
+<!-- multilang from README.md
+
+
+
+
+NO MODIFIQUE ESTE ARCHIVO. FUE GENERADO AUTOMÁTICAMENTE POR multilang.js
+
+
+
+
+-->
 # auto-deploy
 auto deploy github based project and others
 
-<!--multilang v0 en:README.md es:LEEME.md -->
 
 ![designing](https://img.shields.io/badge/stability-desgining-red.svg)
 [![version](https://img.shields.io/npm/v/auto-deploy.svg)](https://npmjs.org/package/auto-deploy)
@@ -12,9 +22,10 @@ auto deploy github based project and others
 [![dependencies](https://img.shields.io/david/codenautas/auto-deploy.svg)](https://david-dm.org/codenautas/auto-deploy)
 
 <!--multilang buttons-->
-language: ![English](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-en.png)
-also available in:
-[![Spanish](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-es.png)](LEEME.md) - 
+
+idioma: ![castellano](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-es.png)
+también disponible en:
+[![inglés](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-en.png)](README.md)
 
 # Use
 
@@ -24,15 +35,9 @@ var autoDeploy = require('auto-deploy');
 app.use('/tools',autoDeploy.middleware({pid:12345}));
 ```
 
-<!--lang:en-->
-
-Then in the URL of the navigator:
-
-<!--lang:es--]
 
 Luego en la URL del navegador
 
-[!--lang:*-->
 
 `http://theserver.zzz/tools/auto-deploy?pid=12345`
 
@@ -40,12 +45,6 @@ or
 
 `http://theserver.zzz/tools/auto-deploy?pid=12345?force=4312`
 
-<!--lang:en-->
-
-# main goal
-* auto deploy by URL (GET request)
-
-<!--lang:es--]
 
 # objetivo principal
 
@@ -61,15 +60,9 @@ Poder especificar en la barra de direcciones del navegador que se desea instalar
   * en caso de que no sea seguro el servidor devuelve un mensaje explicando y un código aleatorio de force. Ej: `force=4312`
   * volviendo a intentar el deploy con force se hace aunque no sea seguro. 
 
-[!--lang:en-->
-
-## License
-
-<!--lang:es--]
 
 ## Licencias
 
-<!--lang:*-->
 
 [MIT](LICENSE)
 
