@@ -11,6 +11,9 @@ var autoDeploy = exports = module.exports = function autoDeploy(opts){
     var killer=express();
     var _process=opts.process || process;
     var pid=opts.pid || _process.pid;
+    //var logFile = opts.logFile || './auto-deploy.log';
+    //if(opts.log==false) { logFile = 'ignore'; }
+    var logFile = opts.log ? opts.logFile || './auto-deploy.log' : 'ignore';
     if(autoDeploy.isRedirectCode(opts.statusKilled) && !('location' in opts)){
         throw new Error('auto-deploy: options.location required');
     };
@@ -23,7 +26,7 @@ var autoDeploy = exports = module.exports = function autoDeploy(opts){
     if(!autoDeploy.isRedirectCode(opts.statusBad) && ('locationBad' in opts)){
         throw new Error('auto-deploy: options.locationBad is only for redirect');
     };
-    if(opts.log){
+    if(opts.log) {
         console.log('auto-deploy (PID:%d): installed', pid);
     }
     killer.get('/'+(opts.statement||'auto-deploy'),function killer(req,res){
@@ -35,13 +38,17 @@ var autoDeploy = exports = module.exports = function autoDeploy(opts){
 
             if(req.query.restart == 1) {
                 var fs = require('fs');
-                var doer_out = './subproc_out.log';
-                var out = fs.openSync(doer_out, 'a'),
-                    err = fs.openSync(doer_out, 'a');
-
-                var spawn=require("child_process").spawn;
+                var out, err;
+                if('ignore' !== logFile) {
+                    out = fs.openSync(logFile, 'a');
+                    err = fs.openSync(logFile, 'a');
+                } else {
+                    out = err = logFile;
+                }
                 var nenv = process.env;
-                nenv["DOER_SCRIPT"]=opts.scriptName;
+                nenv["AUTODEPLOY_LOGFILE"]=logFile;
+                nenv["AUTODEPLOY_SCRIPT"]=opts.scriptName;
+                var spawn=require("child_process").spawn;
                 var restarter = spawn('node', [require('path').normalize(__dirname + "/restarter.js")],
                                               { env: nenv, detached: true, stdio: [ 'ignore', out, err ] });
                 console.log('auto-deploy (PID:%d): starts restarter (PID:%d)', pid, restarter.pid);
