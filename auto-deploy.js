@@ -5,6 +5,8 @@
  */
 "use strict";
 
-exports = module.exports = function structureValidator(opts){
-    throw new Error("Not implemented yet!");
+var express = require('express');
+
+var autoDeploy = exports = module.exports = function autoDeploy(opts){
+    return express();
 }
