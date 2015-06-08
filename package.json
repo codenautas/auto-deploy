@@ -11,6 +11,10 @@
     "name": "Diego Florio", "email": "diegoefe@gmail.com"
   }],
   "dependencies": {
+    "best-promise": "^0.1.2",
+    "fs-extra": "^0.18.3",
+    "fs-promise": "^0.3.1",
+    "express": ">=4.12.3"
   },
   "devDependencies": {
     "istanbul": "~0.3.6",
@@ -18,7 +22,7 @@
   },
   "main":"auto-deploy.js",
   "engines": {
-    "node": ">= 0.10.0"
+    "node": ">= 0.12.2"
   },
   "scripts": {
     "test": "mocha --reporter spec --bail --check-leaks test/",
