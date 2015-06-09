@@ -12,6 +12,7 @@ auto deploy github based project and others
 [![dependencies](https://img.shields.io/david/codenautas/auto-deploy.svg)](https://david-dm.org/codenautas/auto-deploy)
 
 <!--multilang buttons-->
+
 language: ![English](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-en.png)
 also available in:
 [![Spanish](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-es.png)](LEEME.md) - 
@@ -21,7 +22,7 @@ also available in:
 ```js
 var autoDeploy = require('auto-deploy');
 
-app.use('/tools',autoDeploy.middleware({pid:12345}));
+app.use(autoDeploy({pid:12345, log:true, scriptName:'start' , logFile:'./server.log'}));
 ```
 
 <!--lang:en-->
@@ -38,12 +39,28 @@ Luego en la URL del navegador
 
 or
 
-`http://theserver.zzz/tools/auto-deploy?pid=12345?force=4312`
+`http://theserver.zzz/tools/auto-deploy?pid=12345&force=4312`
+
+or
+
+`http://theserver.zzz/tools/auto-deploy?pid=12345&restart=1`
 
 <!--lang:en-->
 
 # main goal
+
+To have the possibility to specify in the address bar of the browser the need to install a new version:
 * auto deploy by URL (GET request)
+* the server executes a `stop` (as clean as possible, for now similar to [kill-9](//npmjs.com/packages/kill-9)
+* the server runs `git pull`
+* the server excutes `npm start --production`
+
+# improvements
+
+* the servers checks the local repository to ensure it's cleaness (to prevent conflicts with the `git pull`)
+* the possibility to register a function that checks the integrity and status of the server. 
+  * in the case where it's safe to shutdown the server, it returns an explanatory message and a random code to force. ie: `force=4312`
+  * the `force` option executes the indicated action anyway.
 
 <!--lang:es--]
 
@@ -69,7 +86,7 @@ Poder especificar en la barra de direcciones del navegador que se desea instalar
 
 ## Licencias
 
-<!--lang:*-->
+[!--lang:*-->
 
 [MIT](LICENSE)
 

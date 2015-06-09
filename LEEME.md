@@ -32,7 +32,7 @@ también disponible en:
 ```js
 var autoDeploy = require('auto-deploy');
 
-app.use('/tools',autoDeploy.middleware({pid:12345}));
+app.use(autoDeploy({pid:12345, log:true, scriptName:'start' , logFile:'./server.log'}));
 ```
 
 
@@ -43,7 +43,11 @@ Luego en la URL del navegador
 
 or
 
-`http://theserver.zzz/tools/auto-deploy?pid=12345?force=4312`
+`http://theserver.zzz/tools/auto-deploy?pid=12345&force=4312`
+
+or
+
+`http://theserver.zzz/tools/auto-deploy?pid=12345&restart=1`
 
 
 # objetivo principal
