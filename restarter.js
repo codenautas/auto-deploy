@@ -7,7 +7,7 @@ fsp.exists(pkgjson).then(function(exists) {
     return fsp.readJson(pkgjson);
 }).then(function(json) {
     var scriptToRun='/unexistentScript';
-    var scriptName = process.env.AUTODEPLOY_SCRIPT;
+    var scriptName = process.argv[3];
     if(json.scripts && scriptName in json.scripts) {
         console.log("Restarter (PID:%d): script (%s)", process.pid, json.scripts[scriptName]);
         var jrun=json.scripts[scriptName].match(/^(node (.*))/);
@@ -20,7 +20,7 @@ fsp.exists(pkgjson).then(function(exists) {
 }).then(function(scriptToRun) {
     var spawn = require("child_process").spawn;
     var fs = require('fs')
-    var logFile = process.env.AUTODEPLOY_LOGFILE;
+    var logFile = process.argv[2];
     var out, err;
     if('ignore' !== logFile) {
         out = fs.openSync(logFile, 'a');
@@ -33,7 +33,7 @@ fsp.exists(pkgjson).then(function(exists) {
     console.log("Restarter (PID:%d): starts server(PID=%d)",
                  process.pid, childspawned.pid);
     console.log("Restarter (PID:%d): using config '%s' (%s)",
-                 process.pid, process.env.AUTODEPLOY_SCRIPT, scriptToRun);
+                 process.pid, process.argv[3], scriptToRun);
     setTimeout(function() {
         console.log("Restarter (PID:%d): ends", process.pid);
         process.exit(0);

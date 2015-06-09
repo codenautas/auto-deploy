@@ -45,12 +45,9 @@ var autoDeploy = exports = module.exports = function autoDeploy(opts){
                 } else {
                     out = err = logFile;
                 }
-                var nenv = process.env;
-                nenv["AUTODEPLOY_LOGFILE"]=logFile;
-                nenv["AUTODEPLOY_SCRIPT"]=opts.scriptName;
                 var spawn=require("child_process").spawn;
-                var restarter = spawn('node', [require('path').normalize(__dirname + "/restarter.js")],
-                                              { env: nenv, detached: true, stdio: [ 'ignore', out, err ] });
+                var restarter = spawn('node', [require('path').normalize(__dirname + "/restarter.js"), logFile, opts.scriptName],
+                                              { detached: true, stdio: [ 'ignore', out, err ] });
                 console.log('auto-deploy (PID:%d): starts restarter (PID:%d)', pid, restarter.pid);
                 res.send('<html><head>'+
                          '<meta http-equiv="refresh" content="2; url=/" /><head>'+

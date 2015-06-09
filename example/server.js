@@ -19,4 +19,4 @@ function site_up(req,res){
 app.get('/index.html',site_up);
 app.get('/',site_up);
 
-app.use(autoDeploy({log:true, scriptName:'start' /*, logFile:'./server.log'*/}));
+app.use(autoDeploy({log:true, scriptName:'start' , logFile:'./server.log'}));
