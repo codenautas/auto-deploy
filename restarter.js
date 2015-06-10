@@ -1,4 +1,7 @@
+require('best-promise');
 var fsp = require('fs-promise');
+console.log("Restarter args", process.argv);
+console.log("Restarter env", process.env);
 console.log("Restarter (PID:%d): starts", process.pid);
 
 var pkgjson='./package.json';

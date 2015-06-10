@@ -1,7 +1,7 @@
 {
   "name": "auto-deploy",
   "description": "auto deploy github based project and others",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "author": "Codenautas <codenautas@googlegroups.com>",
   "license": "MIT",
   "repository": "codenautas/auto-deploy",
