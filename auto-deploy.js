@@ -7,105 +7,100 @@
 var Promises = require('best-promise');
 var express = require('express');
 var fs = require('fs-promise');
+var spawn = require("child_process").spawn;
+var autoDeploy = {};
+autoDeploy.childPID = null;
 
-// var autoDeploy = exports = module.exports = function autoDeploy(opts){
-    // var killer=express();
-    // var _process=opts.process || process;
-    // var pid=opts.pid || _process.pid;
-    // var logFile = opts.logFile || './auto-deploy.log';
-    // if(opts.log==false) { logFile = 'ignore'; }
-    // var logFile = opts.log ? opts.logFile || './auto-deploy.log' : 'ignore';
-    // if(autoDeploy.isRedirectCode(opts.statusKilled) && !('location' in opts)){
-        // throw new Error('auto-deploy: options.location required');
-    // };
-    // if(autoDeploy.isRedirectCode(opts.statusBad) && !('locationBad' in opts)){
-        // throw new Error('auto-deploy: options.locationBad required');
-    // };
-    // if(!autoDeploy.isRedirectCode(opts.statusKilled) && ('location' in opts)){
-        // throw new Error('auto-deploy: options.location is only for redirect');
-    // };
-    // if(!autoDeploy.isRedirectCode(opts.statusBad) && ('locationBad' in opts)){
-        // throw new Error('auto-deploy: options.locationBad is only for redirect');
-    // };
-    // if(opts.log) {
-        // console.log('auto-deploy (PID:%d): installed', pid);
-    // }
-    // killer.get('/'+(opts.statement||'auto-deploy'),function killer(req,res){
-        // if(req.query.pid==pid){
-            // res.status(opts.statusKilled||autoDeploy.defaults.statusKilled);
-            // if(opts.location){
-                // res.header('Location',opts.location);
-            // }
+autoDeploy.readVars = function readVars() {
+    var vars={};
+    return Promises.start(function() {
+        return fs.readJson('./package.json');
+    }).then(function(json){
+        var adp=json['auto-deploy'];
+        if(!adp) { throw new Error('Missing "auto-deploy" section in package.json');  }
+        vars.server = adp['server'];
+        if(! vars.server) { throw new Error('Missing "server" section in "auto-deploy" section of package.json'); }
+        vars.commands=json['auto-deploy']['commands'];
+        if(! vars.commands) { throw new Error('No commands to run for auto-deploy'); }
+        return vars;
+    }).catch(function(err) {
+        console.log("ERROR", err);
+        console.log("STACK", err.stack);
+    });
+};
 
-            // if(req.query.restart == 1) {
-                // var fs = require('fs');
-                // var out, err;
-                // if('ignore' !== logFile) {
-                    // out = fs.openSync(logFile, 'a');
-                    // err = fs.openSync(logFile, 'a');
-                // } else {
-                    // out = err = logFile;
-                // }
-                // var spawn=require("child_process").spawn;
-                // var restarter = spawn('node', [require('path').normalize(__dirname + "/restarter.js"), logFile, opts.scriptName],
-                                              // { detached: true, stdio: [ 'ignore', out, err ] });
-                // console.log('auto-deploy (PID:%d): starts restarter (PID:%d)', pid, restarter.pid);
-                // res.send('<html><head>'+
-                         // '<meta http-equiv="refresh" content="2; url=/" /><head>'+
-                         // '<body><h3>Ejecuting restart...</h3></body></html>');
-            // }
-            // else {
-                // res.send(opts.messageKilled||'auto-deploy success');
-            // }
-            // console.log('auto-deploy (PID:%d): ends', pid);
-            // _process.exit(opts.exitCode||autoDeploy.defaults.exitCode);
+//var logFile = "ad.log";
+//var fout = fs.openSync(logFile, 'a'), ferr = fs.openSync(logFile, 'a');
+var fout=process.stdout, ferr=process.stederr;
 
-        // }else{
-            // res.status(opts.statusBad||autoDeploy.defaults.statusBad);
-            // if(opts.locationBad){
-                // res.header('Location',opts.locationBad);
-            // }
-            // res.send(opts.messageBad||'auto-deploy unknown');
-        // }
-    // });
-    // return killer;
-// };
-
-// autoDeploy.defaults={
-    // statusKilled:200,
-    // exitCode:0,
-    // statusBad:404
-// };
-
-// autoDeploy.isRedirectCode = function isRedirectCode(htmlCode){
-    // return htmlCode>=300 && htmlCode<=303;
-// };
-
-function handleCommand(msg) {
-    console.log("msg", msg.toString('utf8'));
-}
-
-Promises.start(function() {
-    return fs.readJson('./package.json');
-}).then(function(json){
-    var adp=json['auto-deploy'];
-    //console.log(adp);
-    if(!adp) { throw new Error('Missing "auto-deploy" section in package.json');  }
-    var startCmd = adp['server'];
-    if(!startCmd) { throw new Error('Missing "server" section in "auto-deploy" section of package.json'); }
-    var cmds=json['auto-deploy']['commands'];
-    if(!cmds) { throw new Error('No commands to run for auto-deploy'); }
-    console.log('ejecutando');
-    var cargs=startCmd.split(' ');
+function spawnChild(vars) {
+    var cargs=vars.server.split(' ');
     var cmd=cargs[0];
     cargs.splice(0, 1);
-    console.log("cmd", cmd);
-    console.log("cargs", cargs);
-    var serv = require("child_process").spawn(cmd, cargs,
-                   //{stdio: [ 'ignore', process.stdout, process.stderr, 'pipe'] });
-                   {stdio: [ 'ignore', 'ignore', process.stderr, 'pipe'] });
-    serv.stdio[3].on('data', handleCommand); 
-}).catch(function(err) {
-    console.log("ERROR", err);
-});
+    var child = spawn(cmd, cargs, {stdio: [ 'ignore', fout, ferr, 'pipe'] });
+    autoDeploy.childPID = child.pid;
+    child.stdio[3].on('data', autoDeploy.handleCommand);
+}
 
+autoDeploy.handleCommand = function handleCommand(msg) {
+    Promises.start(function() {
+        return autoDeploy.readVars();
+    }).then(function(vars) {
+        var cmd=msg.toString("utf8");
+        process.kill(autoDeploy.childPID);
+        console.log("Ejecutar "+cmd+"?")
+        if(cmd in vars.commands) {
+            console.log("Ejecutando", vars.commands[cmd]);
+            var restart = true;
+            switch(vars.commands[cmd]) {
+                case 'nop':
+                    break;
+                case 'exit':
+                    restart = false;
+                    break;
+            }
+            if(restart) {
+                console.log("Re-starting server... ["+vars.server+"] PID:", autoDeploy.childPID);
+                spawnChild(vars);
+            }
+        } else { console.log("command not in list: ", cmd); }
+    }).catch(function(err) {
+        console.log("ERROR", err);
+        console.log("STACK", err.stack);
+    });
+}
+
+autoDeploy.startServer = function startServer() {
+    Promises.start(function() {
+        return autoDeploy.readVars();
+    }).then(function(vars) {
+        console.log("Starting server... ["+vars.server+"]");
+        spawnChild(vars);
+    }).catch(function(err) {
+        console.log("ERROR", err);
+        console.log("STACK", err.stack);
+    });
+};
+
+autoDeploy.install = function install(app) {
+    return Promises.start(function() {
+        return autoDeploy.readVars();
+    }).then(function(vars) {
+        console.log("Installing auto-deploy...");
+        app.adHandler = function(req, res) {
+            var laPipa = fs.createWriteStream(null,{fd: 3});
+            for(var cmd in vars.commands) {
+                if(cmd in req.query) {
+                    laPipa.write(cmd);
+                    break;
+                }
+            }
+        }
+        app.get('/auto-deploy', app.adHandler);
+    }).catch(function(err) {
+        console.log("ERROR", err);
+        console.log("STACK", err.stack);
+    });
+}
+
+exports = module.exports = autoDeploy;
