@@ -29,9 +29,20 @@
     "test": "mocha --reporter spec --bail --check-leaks test/",
     "test-ci": "istanbul cover node_modules/mocha/bin/_mocha --report lcovonly -- --reporter spec --check-leaks test/",
     "test-cov": "istanbul cover node_modules/mocha/bin/_mocha -- --reporter dot --check-leaks test/",
-    "start": "node example/server.js"
+    "start": "node example/server.js",
+    "auto-deploy": "node auto-deploy.js"
   },
   "codenautas": {
     "run-in": "server"
+  },
+  "auto-deploy": {
+    "server": "node example/server.js",
+    "log": false,
+    "logFile": "./server.log",
+    "commands":
+        {"update": "git pull",
+         "reset": "git reset --hard",
+         "restart": "nop",
+         "stop": "exit"}
   }
 }
