@@ -41,7 +41,7 @@
   },
   "auto-deploy": {
     "server": "node example/server.js",
-    "log": true,
+    "log": false,
     "logFile": "./server.log",
     "commands":
         {"update": "git pull",
