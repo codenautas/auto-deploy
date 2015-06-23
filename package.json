@@ -47,6 +47,7 @@
         {"update": "git pull",
          "reset": "git reset --hard",
          "restart": "nop",
-         "stop": "exit"}
+         "stop": "exit"},
+    "param": {"pid" : "3344"}
   }
 }

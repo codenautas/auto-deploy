@@ -19,7 +19,8 @@ describe('auto-deploy', function(){
                     "stop": "exit",
                     "update": "git pull"
                 },
-                "server": "node example/server.js"
+                "server": "node example/server.js",
+                "param": {"pid" : "3344"}
             });
             done();
         }).catch(function(err) {
@@ -46,10 +47,10 @@ describe('auto-deploy', function(){
     it('must generate links for predefined actions', function(done){
         return autoDeploy.getLinks().then(function(links) {
             //console.log(links);
-            var elinks = '<a href="/auto-deploy?update">update</a>|'
-                        +'<a href="/auto-deploy?reset">reset</a>|'
-                        +'<a href="/auto-deploy?restart">restart</a>|'
-                        +'<a href="/auto-deploy?stop">stop</a>';
+            var elinks = '<a href="/auto-deploy?update&pid=3344">update</a>|'
+                        +'<a href="/auto-deploy?reset&pid=3344">reset</a>|'
+                        +'<a href="/auto-deploy?restart&pid=3344">restart</a>|'
+                        +'<a href="/auto-deploy?stop&pid=3344">stop</a>';
             expect(links).to.eql(elinks);
             done();
         }).catch(function(err) {

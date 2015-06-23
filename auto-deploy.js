@@ -33,6 +33,7 @@ autoDeploy.initVars = function initVars() {
                 console.log("Warning: logging is on but logFile is not!");
             }
         }
+        vars.param = adp.param;
         return vars;
     }).catch(function(err) {
         console.log("ERROR", err);
@@ -115,8 +116,14 @@ autoDeploy.getLinks = function getLinks() {
         return autoDeploy.initVars();
     }).then(function(vars) {
         var links='';
+        var extraParam = '';
+        if(vars.param) {
+            for(var p in vars.param) {
+                extraParam += '&' + p + '=' + vars.param[p];
+            }
+        }
         for(var cmd in vars.commands) {
-            links += '<a href="/auto-deploy?'+ cmd+ '">' + cmd + '</a>|';
+            links += '<a href="/auto-deploy?'+ cmd+ extraParam + '">' + cmd + '</a>|';
         }
         return links.substr(0, links.length-1);
     }).catch(function(err) {
