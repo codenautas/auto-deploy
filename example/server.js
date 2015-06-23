@@ -3,6 +3,14 @@ var app = express();
 var fs = require('fs');
 var autoDeploy = require('../auto-deploy.js');
 
+var adlinks = '';
+autoDeploy.getLinks().then(function(links) {
+   var urls=links.split('|');
+   for(var i=0; i<urls.length; ++i) {
+       adlinks += '<li>'+urls[i]+'\n';
+   }
+});
+
 var server = app.listen(5555, function() {
     console.log('-------------------------------------------');
     console.log('Server (PID:%d): listening on port %d ', process.pid, server.address().port);
@@ -13,8 +21,7 @@ function site_up(req,res){
     var kill_url='auto-deploy?stop=1&pid='+process.pid;
     res.send("<h1>auto-deploy demo</h1><p> Running with PID:<b>"+process.pid+"</b>"
             +"<p>this site now is up"
-            +"<p>you can restart it: <a href="+restart_url+">"+restart_url+"</a>"
-            +"<p>or stop it: <a href="+kill_url+">"+kill_url+"</a>");
+            +"<p>Your options: <br>\n"+adlinks);
 }
 
 app.get('/index.html',site_up);

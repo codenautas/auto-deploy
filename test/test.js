@@ -42,4 +42,21 @@ describe('auto-deploy', function(){
         });
     });
   });
+  describe('utility methods', function(){
+    it('must generate links for predefined actions', function(done){
+        return autoDeploy.getLinks().then(function(links) {
+            //console.log(links);
+            var elinks = '<a href="/auto-deploy?update">update</a>|'
+                        +'<a href="/auto-deploy?reset">reset</a>|'
+                        +'<a href="/auto-deploy?restart">restart</a>|'
+                        +'<a href="/auto-deploy?stop">stop</a>';
+            expect(links).to.eql(elinks);
+            done();
+        }).catch(function(err) {
+            console.log("ERROR", err);
+            console.log("STACK", err.stack);
+            done(err);
+        });
+    });
+  });
 });

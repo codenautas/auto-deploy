@@ -110,4 +110,19 @@ autoDeploy.install = function install(app) {
     });
 }
 
+autoDeploy.getLinks = function getLinks() {
+    return Promises.start(function() {
+        return autoDeploy.initVars();
+    }).then(function(vars) {
+        var links='';
+        for(var cmd in vars.commands) {
+            links += '<a href="/auto-deploy?'+ cmd+ '">' + cmd + '</a>|';
+        }
+        return links.substr(0, links.length-1);
+    }).catch(function(err) {
+        console.log("ERROR", err);
+        console.log("STACK", err.stack);
+    });
+};
+
 exports = module.exports = autoDeploy;
