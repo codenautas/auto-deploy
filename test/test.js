@@ -6,6 +6,7 @@ var Promises = require('best-promise');
 var fs = require('fs-promise');
 var expectCalled = require('expect-called');
 var autoDeploy = require('../auto-deploy.js');
+var assert = require('assert');
 
 describe('auto-deploy', function(){
     var pkgJS = {
@@ -23,15 +24,13 @@ describe('auto-deploy', function(){
             }
         };
     var controlReadJSon;
-    before(function(done){
+    beforeEach(function(done){
         controlReadJSon = expectCalled.control(fs,'readJson',{returns:[
-            Promises.Promise.resolve(pkgJS),
-            Promises.Promise.resolve(pkgJS),
             Promises.Promise.resolve(pkgJS)
         ]});
         done();
     });
-    after(function(done){
+    afterEach(function(done){
         controlReadJSon.stopControl();
         done();
     });

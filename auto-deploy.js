@@ -56,16 +56,19 @@ autoDeploy.handleCommand = function handleCommand(msg) {
     }).then(function(vars) {
         var cmd=msg.toString("utf8");
         process.kill(autoDeploy.childPID);
-        console.log("Ejecutar "+cmd+"?")
         if(cmd in vars.commands) {
-            console.log("Ejecutando", vars.commands[cmd]);
+            var runCmd = vars.commands[cmd];
+            console.log("Procesando ", cmd);
             var restart = true;
-            switch(vars.commands[cmd]) {
+            switch(runCmd) {
                 case 'nop':
                     break;
                 case 'exit':
                     restart = false;
                     break;
+                default:
+                    // procesamos todos los comandos
+                    console.log("Ejecutando: ", runCmd)
             }
             if(restart) {
                 console.log("Re-starting server... ["+vars.server+"] PID:", autoDeploy.childPID);
