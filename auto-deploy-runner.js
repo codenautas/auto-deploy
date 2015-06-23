@@ -1,3 +1,1 @@
-var autoDeploy = require('./auto-deploy.js');
-
-autoDeploy.startServer();
+require('./auto-deploy.js').startServer();

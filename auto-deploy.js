@@ -8,10 +8,13 @@ var Promises = require('best-promise');
 var express = require('express');
 var fs = require('fs-promise');
 var spawn = require("child_process").spawn;
-var autoDeploy = {};
-autoDeploy.childPID = null;
+var autoDeploy = {
+    childPID: 0,
+    fOut: process.stdout,
+    fErr: process.stderr
+};
 
-autoDeploy.readVars = function readVars() {
+autoDeploy.initVars = function initVars() {
     var vars={};
     return Promises.start(function() {
         return fs.readJson('./package.json');
@@ -22,6 +25,14 @@ autoDeploy.readVars = function readVars() {
         if(! vars.server) { throw new Error('Missing "server" section in "auto-deploy" section of package.json'); }
         vars.commands=json['auto-deploy']['commands'];
         if(! vars.commands) { throw new Error('No commands to run for auto-deploy'); }
+        if(adp.log) {
+            if(adp.logFile) {
+                autoDeploy.fOut = fs.openSync(adp.logFile, 'a');
+                autoDeploy.fErr = fs.openSync(adp.logFile, 'a');
+            } else {
+                console.log("Warning: logging is on but logFile is not!");
+            }
+        }
         return vars;
     }).catch(function(err) {
         console.log("ERROR", err);
@@ -29,22 +40,18 @@ autoDeploy.readVars = function readVars() {
     });
 };
 
-//var logFile = "ad.log";
-//var fout = fs.openSync(logFile, 'a'), ferr = fs.openSync(logFile, 'a');
-var fout=process.stdout, ferr=process.stederr;
-
 function spawnChild(vars) {
     var cargs=vars.server.split(' ');
     var cmd=cargs[0];
     cargs.splice(0, 1);
-    var child = spawn(cmd, cargs, {stdio: [ 'ignore', fout, ferr, 'pipe'] });
+    var child = spawn(cmd, cargs, {stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'] });
     autoDeploy.childPID = child.pid;
     child.stdio[3].on('data', autoDeploy.handleCommand);
 }
 
 autoDeploy.handleCommand = function handleCommand(msg) {
     Promises.start(function() {
-        return autoDeploy.readVars();
+        return autoDeploy.initVars();
     }).then(function(vars) {
         var cmd=msg.toString("utf8");
         process.kill(autoDeploy.childPID);
@@ -72,7 +79,7 @@ autoDeploy.handleCommand = function handleCommand(msg) {
 
 autoDeploy.startServer = function startServer() {
     Promises.start(function() {
-        return autoDeploy.readVars();
+        return autoDeploy.initVars();
     }).then(function(vars) {
         console.log("Starting server... ["+vars.server+"]");
         spawnChild(vars);
@@ -84,7 +91,7 @@ autoDeploy.startServer = function startServer() {
 
 autoDeploy.install = function install(app) {
     return Promises.start(function() {
-        return autoDeploy.readVars();
+        return autoDeploy.initVars();
     }).then(function(vars) {
         console.log("Installing auto-deploy...");
         app.adHandler = function(req, res) {
