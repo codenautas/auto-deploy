@@ -22,11 +22,24 @@ describe('auto-deploy', function(){
                 "server": "node example/server.js"
             });
             done();
-    }).catch(function(err) {
-        console.log("ERROR", err);
-        console.log("STACK", err.stack);
-        done(err);
+        }).catch(function(err) {
+            console.log("ERROR", err);
+            console.log("STACK", err.stack);
+            done(err);
+        });
     });
+    it('must set autoDeploy vars', function(done){
+        return autoDeploy.initVars().then(function(vars) {
+            //console.log(autoDeploy);
+            expect(autoDeploy.childPID).to.eql(0);
+            expect(autoDeploy.fOut).to.be.above(process.stderr.fd);
+            expect(autoDeploy.fErr).to.be.above(process.stderr.fd);
+            done();
+        }).catch(function(err) {
+            console.log("ERROR", err);
+            console.log("STACK", err.stack);
+            done(err);
+        });
     });
   });
 });
