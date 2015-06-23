@@ -17,8 +17,42 @@ language: ![English](https://raw.githubusercontent.com/codenautas/multilang/mast
 also available in:
 [![Spanish](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-es.png)](LEEME.md) - 
 
+<!--lang:en-->
 # Use
+Setup options in package.json
 
+<!--lang:es--]
+# Uso
+Definir opciones en package.json
+
+[!--lang:*-->
+```json
+{
+  "scripts": {
+    "auto-deploy": "node auto-deploy-runner.js"
+  },
+  "auto-deploy": {
+    "server": "node example/server.js",
+    "log": false,
+    "logFile": "./server.log",
+    "commands":
+        {"update": "git pull",
+         "restart": "nop",
+         "stop": "exit"},
+    "param": {"pid" : "3344"}
+  }
+}
+
+```
+<!--lang:en-->
+
+Use the module in your server
+
+<!--lang:es--]
+
+Usar el módulo en tu servidor
+
+[!--lang:*-->
 ```js
 var autoDeploy = require('auto-deploy');
 
@@ -28,23 +62,31 @@ autoDeploy.install(app);
 
 <!--lang:en-->
 
-Then in the URL of the navigator:
+Then start the server with
 
 <!--lang:es--]
 
-Luego en la URL del navegador
+Arrancar el servidor con
 
 [!--lang:*-->
 
-`http://theserver.zzz/tools/auto-deploy?pid=12345`
+npm run-script auto-deploy
 
-or
+<!--lang:en-->
 
-`http://theserver.zzz/tools/auto-deploy?pid=12345&force=4312`
+Then run commands in the URL of the browser, for example:
 
-or
+<!--lang:es--]
 
-`http://theserver.zzz/tools/auto-deploy?pid=12345&restart=1`
+Luego en la URL del navegador ejecutar comandos, por ejemplo:
+
+[!--lang:*-->
+
+`http://theserver.zzz/tools/auto-deploy?update`
+
+`http://theserver.zzz/tools/auto-deploy?restart`
+
+`http://theserver.zzz/tools/auto-deploy?stop&pid=3344`
 
 <!--lang:en-->
 
@@ -52,9 +94,9 @@ or
 
 To have the possibility to specify in the address bar of the browser the need to install a new version:
 * auto deploy by URL (GET request)
-* the server executes a `stop` (as clean as possible, for now similar to [kill-9](//npmjs.com/packages/kill-9)
-* the server runs `git pull`
-* the server excutes `npm start --production`
+* the server executes a `stop` (as clean as possible)
+* the server runs `git pull`, `svn update`, etc
+* the server executes `npm start --production` or similar command
 
 # improvements
 
@@ -68,9 +110,9 @@ To have the possibility to specify in the address bar of the browser the need to
 # objetivo principal
 
 Poder especificar en la barra de direcciones del navegador que se desea instalar una nueva versión:
-* el servidor hace un `stop` (lo más ordenado posible, por ahora algo similar a [kill-9](//npmjs.com/packages/kill-9)
-* el servidor corre un `git pull`
-* el servidor corre un `npm start --production`
+* el servidor hace un `stop` (de la manera más limpia posible)
+* el servidor corre `git pull`, `svn update`, etc
+* el servidor corre un `npm start --production` u otro comando similar
 
 ## mejoras
 

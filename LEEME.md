@@ -27,35 +27,60 @@ idioma: ![castellano](https://raw.githubusercontent.com/codenautas/multilang/mas
 también disponible en:
 [![inglés](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-en.png)](README.md)
 
-# Use
+# Uso
+Definir opciones en package.json
+
+```json
+{
+  "scripts": {
+    "auto-deploy": "node auto-deploy-runner.js"
+  },
+  "auto-deploy": {
+    "server": "node example/server.js",
+    "log": false,
+    "logFile": "./server.log",
+    "commands":
+        {"update": "git pull",
+         "restart": "nop",
+         "stop": "exit"},
+    "param": {"pid" : "3344"}
+  }
+}
+
+```
+
+Usar el módulo en tu servidor
 
 ```js
 var autoDeploy = require('auto-deploy');
 
-app.use(autoDeploy({pid:12345, log:true, scriptName:'start' , logFile:'./server.log'}));
+autoDeploy.install(app);
+
 ```
 
 
-Luego en la URL del navegador
+Arrancar el servidor con
 
 
-`http://theserver.zzz/tools/auto-deploy?pid=12345`
+npm run-script auto-deploy
 
-or
 
-`http://theserver.zzz/tools/auto-deploy?pid=12345&force=4312`
+Luego en la URL del navegador ejecutar comandos, por ejemplo:
 
-or
 
-`http://theserver.zzz/tools/auto-deploy?pid=12345&restart=1`
+`http://theserver.zzz/tools/auto-deploy?update`
+
+`http://theserver.zzz/tools/auto-deploy?restart`
+
+`http://theserver.zzz/tools/auto-deploy?stop&pid=3344`
 
 
 # objetivo principal
 
 Poder especificar en la barra de direcciones del navegador que se desea instalar una nueva versión:
-* el servidor hace un `stop` (lo más ordenado posible, por ahora algo similar a [kill-9](//npmjs.com/packages/kill-9)
-* el servidor corre un `git pull`
-* el servidor corre un `npm start --production`
+* el servidor hace un `stop` (de la manera más limpia posible)
+* el servidor corre `git pull`, `svn update`, etc
+* el servidor corre un `npm start --production` u otro comando similar
 
 ## mejoras
 
