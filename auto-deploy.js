@@ -9,9 +9,9 @@ var express = require('express');
 var fs = require('fs-promise');
 var spawn = require("child_process").spawn;
 var autoDeploy = {
-    childPID: 0,
     fOut: process.stdout,
-    fErr: process.stderr
+    fErr: process.stderr,
+    child: null
 };
 
 autoDeploy.initVars = function initVars() {
@@ -36,8 +36,7 @@ autoDeploy.initVars = function initVars() {
         vars.param = adp.param;
         return vars;
     }).catch(function(err) {
-        console.log("ERROR", err);
-        console.log("STACK", err.stack);
+        console.log("initVars: ERROR", err, err.stack);
     });
 };
 
@@ -45,9 +44,8 @@ function spawnChild(vars) {
     var cargs=vars.server.split(' ');
     var cmd=cargs[0];
     cargs.splice(0, 1);
-    var child = spawn(cmd, cargs, {stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'] });
-    autoDeploy.childPID = child.pid;
-    child.stdio[3].on('data', autoDeploy.handleCommand);
+    autoDeploy.child = spawn(cmd, cargs, {stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'] });
+    autoDeploy.child.stdio[3].on('data', autoDeploy.handleCommand);
 }
 
 autoDeploy.handleCommand = function handleCommand(msg) {
@@ -55,29 +53,31 @@ autoDeploy.handleCommand = function handleCommand(msg) {
         return autoDeploy.initVars();
     }).then(function(vars) {
         var cmd=msg.toString("utf8");
-        process.kill(autoDeploy.childPID);
-        if(cmd in vars.commands) {
-            var runCmd = vars.commands[cmd];
-            console.log("Procesando ", cmd);
-            var restart = true;
-            switch(runCmd) {
-                case 'nop':
-                    break;
-                case 'exit':
-                    restart = false;
-                    break;
-                default:
-                    // procesamos todos los comandos
-                    console.log("Ejecutando: ", runCmd)
-            }
-            if(restart) {
-                console.log("Re-starting server... ["+vars.server+"] PID:", autoDeploy.childPID);
-                spawnChild(vars);
-            }
-        } else { console.log("command not in list: ", cmd); }
+        autoDeploy.child.on('exit', function() {
+            console.log("child exits");
+            if(cmd in vars.commands) {
+                var runCmd = vars.commands[cmd];
+                console.log("Procesando ", cmd);
+                var restart = true;
+                switch(runCmd) {
+                    case 'nop':
+                        break;
+                    case 'exit':
+                        restart = false;
+                        break;
+                    default:
+                        // procesamos todos los comandos
+                        console.log("Ejecutando: ", runCmd)
+                }
+                if(restart) {
+                    spawnChild(vars);
+                    console.log("Re-starting server... ["+vars.server+"] PID:", autoDeploy.child.pid);
+                }
+            } else { console.log("command not in list: ", cmd); }            
+        });
+        process.kill(autoDeploy.child.pid);
     }).catch(function(err) {
-        console.log("ERROR", err);
-        console.log("STACK", err.stack);
+        console.log("handleCommand: ERROR", err, err.stack);
     });
 }
 
@@ -88,8 +88,7 @@ autoDeploy.startServer = function startServer() {
         console.log("Starting server... ["+vars.server+"]");
         spawnChild(vars);
     }).catch(function(err) {
-        console.log("ERROR", err);
-        console.log("STACK", err.stack);
+        console.log("startServer: ERROR", err, err.stack);
     });
 };
 
@@ -109,8 +108,7 @@ autoDeploy.install = function install(app) {
         }
         app.get('/auto-deploy', app.adHandler);
     }).catch(function(err) {
-        console.log("ERROR", err);
-        console.log("STACK", err.stack);
+        console.log("install: ERROR", err, err.stack);
     });
 }
 
@@ -130,8 +128,7 @@ autoDeploy.getLinks = function getLinks() {
         }
         return links.substr(0, links.length-1);
     }).catch(function(err) {
-        console.log("ERROR", err);
-        console.log("STACK", err.stack);
+        console.log("getLinks: ERROR", err, err.stack);
     });
 };
 
