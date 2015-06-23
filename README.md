@@ -22,7 +22,8 @@ also available in:
 ```js
 var autoDeploy = require('auto-deploy');
 
-app.use(autoDeploy({pid:12345, log:true, scriptName:'start' , logFile:'./server.log'}));
+autoDeploy.install(app);
+
 ```
 
 <!--lang:en-->

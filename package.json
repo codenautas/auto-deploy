@@ -45,8 +45,8 @@
     "logFile": "./server.log",
     "commands":
         {"update": "git pull",
-         "ls": "ls -al",
-         "reset": "git reset --hard",
+         "ls (unix)": "ls -al",
+         "dir": "dir *.*",
          "restart": "nop",
          "stop": "exit"},
     "param": {"pid" : "3344"}

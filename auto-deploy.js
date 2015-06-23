@@ -40,42 +40,51 @@ autoDeploy.initVars = function initVars() {
     });
 };
 
-function spawnChild(vars) {
-    var cargs=vars.server.split(' ');
+function spawnChildNoPipe(childPath) {
+    var cargs=childPath.split(' ');
     var cmd=cargs[0];
     cargs.splice(0, 1);
-    autoDeploy.child = spawn(cmd, cargs, {stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'] });
+    return spawn(cmd, cargs, {stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'] });
+}
+
+function spawnChild(childPath) {
+    autoDeploy.child = spawnChildNoPipe(childPath);
     autoDeploy.child.stdio[3].on('data', autoDeploy.handleCommand);
+}
+
+autoDeploy.doRestart = function doRestart(childPath) {
+    spawnChild(childPath);
+    console.log("Re-starting server... ["+childPath+"] PID:", autoDeploy.child.pid);
 }
 
 autoDeploy.handleCommand = function handleCommand(msg) {
     Promises.start(function() {
         return autoDeploy.initVars();
     }).then(function(vars) {
-        var cmd=msg.toString("utf8");
-        autoDeploy.child.on('exit', function() {
-            console.log("child exits");
-            if(cmd in vars.commands) {
+        var cmd=decodeURI(msg.toString("utf8"));
+        var restart = true;
+        if(cmd in vars.commands) {
+            autoDeploy.child.on('exit', function() {
+                console.log("child exits");
                 var runCmd = vars.commands[cmd];
                 console.log("Procesando ", cmd);
-                var restart = true;
-                switch(runCmd) {
-                    case 'nop':
-                        break;
-                    case 'exit':
-                        restart = false;
-                        break;
-                    default:
-                        // procesamos todos los comandos
-                        console.log("Ejecutando: ", runCmd)
+                if('exit' != runCmd) { // solo si hay que reiniciar
+                    if('nop' === runCmd) {
+                        autoDeploy.doRestart(vars.server);
+                    } else { // tenemos algo que ejecutar
+                        var chld = spawnChildNoPipe(runCmd);
+                        chld.on('exit', function() {
+                           autoDeploy.doRestart(vars.server); 
+                        });
+                        chld.on('error', function(err) {
+                           console.log(runCmd+' error:', err);
+                           autoDeploy.doRestart(vars.server);
+                        });
+                    }
                 }
-                if(restart) {
-                    spawnChild(vars);
-                    console.log("Re-starting server... ["+vars.server+"] PID:", autoDeploy.child.pid);
-                }
-            } else { console.log("command not in list: ", cmd); }            
-        });
-        process.kill(autoDeploy.child.pid);
+            });
+            process.kill(autoDeploy.child.pid);
+        } else { console.log("command not in list: ", cmd); }
     }).catch(function(err) {
         console.log("handleCommand: ERROR", err, err.stack);
     });
@@ -86,7 +95,7 @@ autoDeploy.startServer = function startServer() {
         return autoDeploy.initVars();
     }).then(function(vars) {
         console.log("Starting server... ["+vars.server+"]");
-        spawnChild(vars);
+        spawnChild(vars.server);
     }).catch(function(err) {
         console.log("startServer: ERROR", err, err.stack);
     });
@@ -124,7 +133,7 @@ autoDeploy.getLinks = function getLinks() {
             }
         }
         for(var cmd in vars.commands) {
-            links += '<a href="/auto-deploy?'+ cmd+ extraParam + '">' + cmd + '</a>|';
+            links += '<a href="/auto-deploy?'+ encodeURI(cmd + extraParam) + '">' + cmd + '</a>|';
         }
         return links.substr(0, links.length-1);
     }).catch(function(err) {
