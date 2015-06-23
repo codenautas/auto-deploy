@@ -45,6 +45,7 @@
     "logFile": "./server.log",
     "commands":
         {"update": "git pull",
+         "ls": "ls -al",
          "reset": "git reset --hard",
          "restart": "nop",
          "stop": "exit"},

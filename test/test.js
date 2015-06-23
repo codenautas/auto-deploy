@@ -53,7 +53,7 @@ describe('auto-deploy', function(){
         it('must set autoDeploy vars', function(done){
             return autoDeploy.initVars().then(function(vars) {
                 //console.log(autoDeploy);
-                expect(autoDeploy.childPID).to.eql(0);
+                expect(autoDeploy.child).to.be(null);
                 expect(autoDeploy.fOut).to.be.above(process.stderr.fd);
                 expect(autoDeploy.fErr).to.be.above(process.stderr.fd);
                 done();
