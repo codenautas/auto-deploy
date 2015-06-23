@@ -33,7 +33,7 @@ Definir opciones en package.json
 ```json
 {
   "scripts": {
-    "auto-deploy": "node auto-deploy-runner.js"
+    "auto-deploy": "auto-deploy-run"
   },
   "auto-deploy": {
     "server": "node example/server.js",
