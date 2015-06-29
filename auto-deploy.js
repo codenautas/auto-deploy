@@ -105,7 +105,7 @@ autoDeploy.install = function install(app) {
     return Promises.start(function() {
         return autoDeploy.initVars();
     }).then(function(vars) {
-        console.log("Installing auto-deploy...");
+        process.stdout.write("Connecting auto-deploy...");
         app.adHandler = function(req, res) {
             var laPipa = fs.createWriteStream(null,{fd: 3});
             for(var cmd in vars.commands) {
@@ -116,6 +116,7 @@ autoDeploy.install = function install(app) {
             }
         }
         app.get('/auto-deploy', app.adHandler);
+        process.stdout.write(" connected.\n");
     }).catch(function(err) {
         console.log("install: ERROR", err, err.stack);
     });
