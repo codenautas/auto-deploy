@@ -18,6 +18,7 @@
     "fs-promise": "^0.3.1",
     "lodash": ">=3.9.1",
     "express": ">=4.12.4",
+    "commander": ">=2.8.1",
 
     "best-promise": "^0.2.2"
   },
@@ -36,22 +37,10 @@
     "test": "mocha --reporter spec --bail --check-leaks test/",
     "test-ci": "istanbul cover node_modules/mocha/bin/_mocha --report lcovonly -- --reporter spec --check-leaks test/",
     "test-cov": "istanbul cover node_modules/mocha/bin/_mocha -- --reporter dot --check-leaks test/",
-    "start": "node example/server.js",
-    "auto-deploy": "node auto-deploy-runner.js"
+    "start-wrong": "node example/server.js",
+    "start": "node auto-deploy-runner.js example/server.js"
   },
   "codenautas": {
     "run-in": "server"
-  },
-  "auto-deploy": {
-    "server": "node example/server.js",
-    "log": false,
-    "logFile": "./server.log",
-    "commands":
-        {"update": "git pull",
-         "ls (unix)": "ls -al",
-         "dir": "dir *.*",
-         "restart": "nop",
-         "stop": "exit"},
-    "param": {"pid" : "3344"}
   }
 }

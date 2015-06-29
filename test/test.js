@@ -11,7 +11,6 @@ var assert = require('assert');
 describe('auto-deploy', function(){
     var pkgJS = {
         "auto-deploy": {
-            "server": "node example/server.js",
             "log": true,
             "logFile": "./server.log",
             "commands": {
@@ -40,7 +39,7 @@ describe('auto-deploy', function(){
                 //console.log(vars);
                 var adp=pkgJS['auto-deploy'];
                 expect(vars.commands).to.eql(adp.commands);
-                expect(vars.server).to.eql(adp.server);
+                //expect(vars.server).to.eql(adp.server);
                 expect(vars.param).to.eql(adp.param);
                 done();
             }).catch(function(err) {

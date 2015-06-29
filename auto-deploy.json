@@ -1,0 +1,13 @@
+{
+ "auto-deploy": {
+    "log": false,
+    "logFile": "./auto-deploy.log",
+    "commands":
+        {"update": "git pull",
+         "ls (unix)": "ls -al",
+         "dir": "dir *.*",
+         "restart": "nop",
+         "stop": "exit"},
+    "param": {"pid" : "3344"}
+    }
+}
