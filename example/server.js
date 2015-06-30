@@ -22,4 +22,4 @@ function site_up(req,res){
 app.get('/index.html',site_up);
 app.get('/',site_up);
 
-app.use(apUrl, autoDeploy.middleware({pid:12345, log:true, logFile:'./slog.log'}));
+app.use(apUrl, autoDeploy.middleware({pid:12345}));

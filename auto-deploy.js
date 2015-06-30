@@ -16,7 +16,6 @@ var autoDeploy = {
     fErr: process.stderr,
     child: null,
     childPath: null,
-    pid: 0,
     // commands: [
         // 'git pull',
         // 'npm prune',
@@ -25,6 +24,7 @@ var autoDeploy = {
     commands: [
         //'comando que da error',
         'ls -l',
+        'npm.cmd -v',
         'c:\\WINDOWS\\unixutil\\which.exe ls.exe',
         'ls'
     ]
@@ -110,53 +110,18 @@ function runAll(cmds, done) {
 }
 
 autoDeploy.handleCommand = function handleCommand(msg) {
-        var cmd=decodeURI(msg.toString("utf8"));
-        var restart = true;
-        autoDeploy.child.on('exit', function() {
-            if(cmd === 'restart') {
-                var cmds=autoDeploy.commands.slice(0); // hacemos una copia
-                runAll(cmds, function(err) {
-                    if(err) { console.log("Error: ", err); }
-                    autoDeploy.doRestart(autoDeploy.childPath);
-                });
-            }
-        });
-        process.kill(autoDeploy.child.pid);
-}
-
-autoDeploy.handleCommandOK = function handleCommandOK(msg) {
-        var cmd=decodeURI(msg.toString("utf8"));
-        var restart = true;
-        autoDeploy.child.on('exit', function() {
-            if(cmd === 'restart') {
-                console.log("va ls 1");
-                var c1 = spawnChildNoNode('ls -al');
-                c1.on('exit', function() {
-                    console.log("va which");
-                    var c2 = spawnChildNoNode('c:\\WINDOWS\\unixutil\\which.exe ls.exe');
-                    c2.on('exit', function() {
-                        console.log("va ls a secas");
-                        var c3 = spawnChildNoNode('ls');
-                        c3.on('exit', function() {
-                            autoDeploy.doRestart(autoDeploy.childPath); 
-                        });
-                        c3.on('error', function() {
-                            console.log('hostname error:', err);
-                            autoDeploy.doRestart(autoDeploy.childPath);
-                        });
-                    });
-                    c2.on('error', function() {
-                        console.log('which error:', err);
-                        autoDeploy.doRestart(autoDeploy.childPath);
-                    });
-                });
-                c1.on('error', function(err) {
-                    console.log('ls error:', err);
-                    autoDeploy.doRestart(autoDeploy.childPath);
-               });                
-            }
-        });
-        process.kill(autoDeploy.child.pid);
+    var cmd=decodeURI(msg.toString("utf8"));
+    var restart = true;
+    autoDeploy.child.on('exit', function() {
+        if(cmd === 'restart') {
+            var cmds=autoDeploy.commands.slice(0); // hacemos una copia
+            runAll(cmds, function(err) {
+                if(err) { console.log("Error: ", err); }
+                autoDeploy.doRestart(autoDeploy.childPath);
+            });
+        }
+    });
+    process.kill(autoDeploy.child.pid);
 }
 
 autoDeploy.startServer = function startServer(params) {
