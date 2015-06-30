@@ -9,6 +9,8 @@ var Promises = require('best-promise');
 var express = require('express');
 var fs = require('fs-promise');
 var spawn = require("child_process").spawn;
+var Path = require('path');
+
 var autoDeploy = {
     fOut: process.stdout,
     fErr: process.stderr,
@@ -48,7 +50,12 @@ function spawnChildNoPipe(theChildPath) {
     } else {
         cmd = "node";
     }
-    var child =spawn(cmd, cargs, {stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'], env:{'I_AM_A_CHILD':1} });
+    var child =spawn(cmd, cargs,
+                     {
+                      stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'],
+                      env:{'AUTODEPLOY_PARENT': Path.basename(process.mainModule.filename)}
+                     }
+                    );
     return child;
 }
 
@@ -108,8 +115,8 @@ autoDeploy.startServer = function startServer(_server_name) {
 };
 
 autoDeploy.install = function install(app) {
-    if(!process.env['I_AM_A_CHILD']) {
-        throw new Error('An auto-deploy client should be started with auto-deploy-run.js');
+    if(process.env['AUTODEPLOY_PARENT'] !== 'auto-deploy-runner.js') {
+        throw new Error('An auto-deploy client should be started with auto-deploy-runner.js');
     }
     return Promises.start(function() {
         return autoDeploy.initVars();
