@@ -15,7 +15,10 @@ var autoDeploy = {
     fOut: process.stdout,
     fErr: process.stderr,
     child: null,
-    childPath: null
+    childPath: null,
+    log: null,
+    logFile: null,
+    pid: 0
 };
 
 autoDeploy.initVars = function initVars() {
@@ -156,6 +159,55 @@ autoDeploy.getLinks = function getLinks() {
     }).catch(function(err) {
         console.log("getLinks: ERROR", err, err.stack);
     });
+};
+
+autoDeploy.middlewareOLD = function middlewareOLD(opts){
+    if(process.env['AUTODEPLOY_PARENT'] !== 'auto-deploy-runner.js') {
+        throw new Error('An auto-deploy client should be started with auto-deploy-runner.js');
+    }
+    var pid=opts.pid || _process.pid;
+    var deployer = express();
+    process.stdout.write("Connecting auto-deploy...");
+    deployer.get('/auto-deploy', function(req, res) {
+        return Promises.start(function() {
+            return autoDeploy.initVars();
+        }).then(function(vars) {
+            if(req.query.pid && req.query.pid == pid) {
+                var laPipa = fs.createWriteStream(null,{fd: 3});
+                for(var cmd in vars.commands) {
+                    if(cmd in req.query) {
+                        laPipa.write(cmd);
+                        break;
+                    }
+                }                
+            }// else { console.log("no ejecuto"); }
+        });
+    });
+    process.stdout.write(" connected.\n");
+    return deployer;
+};
+
+autoDeploy.middleware = function middleware(opts){
+    if(process.env['AUTODEPLOY_PARENT'] !== 'auto-deploy-runner.js') {
+        throw new Error('An auto-deploy client should be started with auto-deploy-runner.js');
+    }
+    var pid=opts.pid || _process.pid;
+    console.log('auto-deploy installed');
+    return function(req, res) {
+        return Promises.start(function() {
+            return autoDeploy.initVars();
+        }).then(function(vars) {
+            if(req.query.pid && req.query.pid == pid) {
+                var laPipa = fs.createWriteStream(null,{fd: 3});
+                for(var cmd in vars.commands) {
+                    if(cmd in req.query) {
+                        laPipa.write(cmd);
+                        break;
+                    }
+                }                
+            }// else { console.log("no ejecuto"); }
+        });
+    };
 };
 
 exports = module.exports = autoDeploy;

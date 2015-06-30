@@ -8,6 +8,6 @@
          "dir": "dir *.*",
          "restart": "nop",
          "stop": "exit"},
-    "param": {"pid" : "3344"}
+    "param": {"pid" : "12345"}
     }
 }

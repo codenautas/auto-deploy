@@ -25,4 +25,5 @@ function site_up(req,res){
 app.get('/index.html',site_up);
 app.get('/',site_up);
 
-autoDeploy.install(app);
+//app.use(autoDeploy.middleware({pid:12345}));
+app.use('/tools', autoDeploy.middleware({pid:12345}));
