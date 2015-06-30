@@ -16,17 +16,28 @@ var autoDeploy = {
     fErr: process.stderr,
     child: null,
     childPath: null,
-    pid: 0
+    pid: 0,
+    // commands: [
+        // 'git pull',
+        // 'npm prune',
+        // 'npm install'
+    // ];
+    commands: [
+        //'comando que da error',
+        'ls -l',
+        'c:\\WINDOWS\\unixutil\\which.exe ls.exe',
+        'ls'
+    ]
 };
 
-function spawnChildNoPipe(theChildPath) {
+function spawnChildNoNode(theChildPath, exeRunner) {
     var cargs=theChildPath.split(' ');
+    var marg=exeRunner ? 1 : 0;
     var cmd=cargs[0];
-    if(cargs.length>1) {
+    if(cargs.length>marg) {
         cargs.splice(0, 1);
-    } else {
-        cmd = "node";
     }
+    if(exeRunner) { cmd = exeRunner; }
     var child =spawn(cmd, cargs,
                      {
                       stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'],
@@ -34,6 +45,10 @@ function spawnChildNoPipe(theChildPath) {
                      }
                     );
     return child;
+}
+
+function spawnChildNoPipe(theChildPath) {
+    return spawnChildNoNode(theChildPath, 'node');
 }
 
 function spawnChild(theChildPath) {
@@ -56,16 +71,89 @@ autoDeploy.parseParams = function parseParams(params) {
     }
 };
 
+function runCmd(cmd, done){
+    console.log("RUNNING:", cmd);
+    var p = spawnChildNoNode(cmd)
+    p.on('exit', function(code){
+        var err = null;
+        if (code) {
+            err = new Error('command "'+ cmd +'" exited with wrong status code "'+ code +'"');
+            err.code = code;
+            err.cmd = cmd;
+        }
+        if (done) done(err);
+    });
+    p.on('error', function(err) {
+        if(done) {
+            done(err);
+        } else {
+            console.log("Command Error:", err)
+        }
+    });
+};
+
+function runAll(cmds, done) {
+    var next = function() {
+        runCmd(cmds.shift(), function(err) {
+           if(err){
+               done(err);
+           } else {
+               if(cmds.length) {
+                   next();
+               } else {
+                   done(null);
+               }
+           }
+        });
+    };
+    next();
+}
+
 autoDeploy.handleCommand = function handleCommand(msg) {
         var cmd=decodeURI(msg.toString("utf8"));
         var restart = true;
         autoDeploy.child.on('exit', function() {
             if(cmd === 'restart') {
-                // ejecutar 
-                // - git pull
-                // - npm prune
-                // - npm install
-                autoDeploy.doRestart(autoDeploy.childPath);
+                var cmds=autoDeploy.commands.slice(0); // hacemos una copia
+                runAll(cmds, function(err) {
+                    if(err) { console.log("Error: ", err); }
+                    autoDeploy.doRestart(autoDeploy.childPath);
+                });
+            }
+        });
+        process.kill(autoDeploy.child.pid);
+}
+
+autoDeploy.handleCommandOK = function handleCommandOK(msg) {
+        var cmd=decodeURI(msg.toString("utf8"));
+        var restart = true;
+        autoDeploy.child.on('exit', function() {
+            if(cmd === 'restart') {
+                console.log("va ls 1");
+                var c1 = spawnChildNoNode('ls -al');
+                c1.on('exit', function() {
+                    console.log("va which");
+                    var c2 = spawnChildNoNode('c:\\WINDOWS\\unixutil\\which.exe ls.exe');
+                    c2.on('exit', function() {
+                        console.log("va ls a secas");
+                        var c3 = spawnChildNoNode('ls');
+                        c3.on('exit', function() {
+                            autoDeploy.doRestart(autoDeploy.childPath); 
+                        });
+                        c3.on('error', function() {
+                            console.log('hostname error:', err);
+                            autoDeploy.doRestart(autoDeploy.childPath);
+                        });
+                    });
+                    c2.on('error', function() {
+                        console.log('which error:', err);
+                        autoDeploy.doRestart(autoDeploy.childPath);
+                    });
+                });
+                c1.on('error', function(err) {
+                    console.log('ls error:', err);
+                    autoDeploy.doRestart(autoDeploy.childPath);
+               });                
             }
         });
         process.kill(autoDeploy.child.pid);
