@@ -9,6 +9,7 @@ var autoDeploy = require('../auto-deploy.js');
 var assert = require('assert');
 
 describe('auto-deploy', function(){
+    throw new Error("Not implemented yet");
      describe('initialization', function(){
         it.skip('must set autoDeploy vars', function(done){
             done();

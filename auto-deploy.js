@@ -11,22 +11,17 @@ var fs = require('fs-promise');
 var spawn = require("child_process").spawn;
 var Path = require('path');
 
+var isWIN = /^win/.test(process.platform);
+var npmbin =  isWIN ? 'npm.cmd' : 'npm';
 var autoDeploy = {
     fOut: process.stdout,
     fErr: process.stderr,
     child: null,
     childPath: null,
-    // commands: [
-        // 'git pull',
-        // 'npm prune',
-        // 'npm install'
-    // ];
     commands: [
-        //'comando que da error',
-        'ls -l',
-        'npm.cmd -v',
-        'c:\\WINDOWS\\unixutil\\which.exe ls.exe',
-        'ls'
+        'git pull',
+        npmbin+' prune',
+        npmbin+' install'
     ]
 };
 
@@ -38,13 +33,18 @@ function spawnChildNoNode(theChildPath, exeRunner) {
         cargs.splice(0, 1);
     }
     if(exeRunner) { cmd = exeRunner; }
-    var child =spawn(cmd, cargs,
-                     {
-                      stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'],
-                      env:{'AUTODEPLOY_PARENT': Path.basename(process.mainModule.filename)}
-                     }
-                    );
-    return child;
+    var childEnv = process.env;
+    childEnv['AUTODEPLOY_PARENT']= Path.basename(process.mainModule.filename);
+    if(isWIN) {
+        childEnv['APPDATA'] = process.env['APPDATA'];
+        childEnv['TMP'] = process.env['TEMP'];
+    }
+    return spawn(cmd,
+                 cargs,
+                 {
+                     stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'],
+                     env: childEnv
+                 });
 }
 
 function spawnChildNoPipe(theChildPath) {
