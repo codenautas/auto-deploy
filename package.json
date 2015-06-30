@@ -37,8 +37,9 @@
     "test": "mocha --reporter spec --bail --check-leaks test/",
     "test-ci": "istanbul cover node_modules/mocha/bin/_mocha --report lcovonly -- --reporter spec --check-leaks test/",
     "test-cov": "istanbul cover node_modules/mocha/bin/_mocha -- --reporter dot --check-leaks test/",
-    "start-wrong": "node example/server.js",
-    "start": "node auto-deploy-runner.js example/server.js"
+    "start": "node auto-deploy-runner.js example/server.js",
+    "start-log": "node auto-deploy-runner.js -l serv.log example/server.js",
+    "start-wrong": "node example/server.js"
   },
   "codenautas": {
     "run-in": "server"
