@@ -4,6 +4,7 @@
  * GNU Licensed
  */
 "use strict";
+
 var Promises = require('best-promise');
 var express = require('express');
 var fs = require('fs-promise');
@@ -47,7 +48,8 @@ function spawnChildNoPipe(theChildPath) {
     } else {
         cmd = "node";
     }
-    return spawn(cmd, cargs, {stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'] });
+    var child =spawn(cmd, cargs, {stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'], env:{'I_AM_A_CHILD':1} });
+    return child;
 }
 
 function spawnChild(theChildPath) {
@@ -106,6 +108,9 @@ autoDeploy.startServer = function startServer(_server_name) {
 };
 
 autoDeploy.install = function install(app) {
+    if(!process.env['I_AM_A_CHILD']) {
+        throw new Error('An auto-deploy client should be started with auto-deploy-run.js');
+    }
     return Promises.start(function() {
         return autoDeploy.initVars();
     }).then(function(vars) {
