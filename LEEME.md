@@ -44,7 +44,7 @@ Usar el módulo en tu servidor
 ```js
 var autoDeploy = require('auto-deploy');
 
-app.use(apUrl, autoDeploy.middleware({pid:12345}));
+app.use('/tools', autoDeploy.middleware({pid:12345}));
 
 ```
 
