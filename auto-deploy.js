@@ -134,7 +134,7 @@ autoDeploy.middleware = function middleware(opts){
     if(process.env['AUTODEPLOY_PARENT'] !== 'auto-deploy-runner.js') {
         throw new Error('An auto-deploy client should be started with auto-deploy-runner.js');
     }
-    var pid=opts.pid || _process.pid;
+    var pid=opts.pid || process.pid;
     return function(req, res) {
         if(req.query.pid && req.query.pid == pid) {
             var laPipa = fs.createWriteStream(null,{fd: 3});
