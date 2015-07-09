@@ -28,22 +28,12 @@ también disponible en:
 [![inglés](https://raw.githubusercontent.com/codenautas/multilang/master/img/lang-en.png)](README.md)
 
 # Uso
-Definir opciones en package.json
+Agregar la linea de inicio al package.json
 
 ```json
 {
   "scripts": {
-    "auto-deploy": "auto-deploy-run"
-  },
-  "auto-deploy": {
-    "server": "node example/server.js",
-    "log": false,
-    "logFile": "./server.log",
-    "commands":
-        {"update": "git pull",
-         "restart": "nop",
-         "stop": "exit"},
-    "param": {"pid" : "3344"}
+    "auto-deploy": "auto-deploy-run server/server.js"
   }
 }
 
@@ -54,7 +44,20 @@ Usar el módulo en tu servidor
 ```js
 var autoDeploy = require('auto-deploy');
 
-autoDeploy.install(app);
+app.use('/tools', autoDeploy.middleware({pid:12345}));
+
+```
+
+
+Para guardar mensajes en un archivo de texto puedes pasarle el
+archivo como argumento a auto-deploy-run, por ejemplo:
+
+```json
+{
+  "scripts": {
+    "auto-deploy": "auto-deploy-run -l server.log server/server.js"
+  }
+}
 
 ```
 
@@ -68,21 +71,12 @@ npm run-script auto-deploy
 Luego en la URL del navegador ejecutar comandos, por ejemplo:
 
 
-`http://theserver.zzz/tools/auto-deploy?update`
-
 `http://theserver.zzz/tools/auto-deploy?restart`
 
 `http://theserver.zzz/tools/auto-deploy?stop&pid=3344`
 
 
-# objetivo principal
-
-Poder especificar en la barra de direcciones del navegador que se desea instalar una nueva versión:
-* el servidor hace un `stop` (de la manera más limpia posible)
-* el servidor corre `git pull`, `svn update`, etc
-* el servidor corre un `npm start --production` u otro comando similar
-
-## mejoras
+## mejoras posibles
 
 * el servidor revisa primero que no haya nada sucio (para que no haya peligro de que dé conflictos al bajar)
 * poder registrar una función que indique si es seguro matar el servidor 

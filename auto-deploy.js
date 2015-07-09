@@ -4,141 +4,149 @@
  * GNU Licensed
  */
 "use strict";
+
 var Promises = require('best-promise');
 var express = require('express');
 var fs = require('fs-promise');
 var spawn = require("child_process").spawn;
+var Path = require('path');
+
+var isWIN = /^win/.test(process.platform);
+var npmbin =  isWIN ? 'npm.cmd' : 'npm';
 var autoDeploy = {
     fOut: process.stdout,
     fErr: process.stderr,
-    child: null
+    child: null,
+    childPath: null,
+    commands: [
+        'git pull',
+        npmbin+' prune',
+        npmbin+' install'
+    ]
 };
 
-autoDeploy.initVars = function initVars() {
-    var vars={};
-    return Promises.start(function() {
-        return fs.readJson('./package.json');
-    }).then(function(json){
-        var adp=json['auto-deploy'];
-        if(!adp) { throw new Error('Missing "auto-deploy" section in package.json');  }
-        vars.server = adp['server'];
-        if(! vars.server) { throw new Error('Missing "server" section in "auto-deploy" section of package.json'); }
-        vars.commands=json['auto-deploy']['commands'];
-        if(! vars.commands) { throw new Error('No commands to run for auto-deploy'); }
-        if(adp.log) {
-            if(adp.logFile) {
-                autoDeploy.fOut = fs.openSync(adp.logFile, 'a');
-                autoDeploy.fErr = fs.openSync(adp.logFile, 'a');
-            } else {
-                console.log("Warning: logging is on but logFile is not!");
-            }
-        }
-        vars.param = adp.param;
-        return vars;
-    }).catch(function(err) {
-        console.log("initVars: ERROR", err, err.stack);
-    });
-};
-
-function spawnChildNoPipe(childPath) {
-    var cargs=childPath.split(' ');
+function spawnChildNoNode(theChildPath, exeRunner) {
+    var cargs=theChildPath.split(' ');
+    var marg=exeRunner ? 1 : 0;
     var cmd=cargs[0];
-    cargs.splice(0, 1);
-    return spawn(cmd, cargs, {stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'] });
+    if(cargs.length>marg) {
+        cargs.splice(0, 1);
+    }
+    if(exeRunner) { cmd = exeRunner; }
+    var childEnv = process.env;
+    childEnv['AUTODEPLOY_PARENT']= Path.basename(process.mainModule.filename);
+    if(isWIN) {
+        childEnv['APPDATA'] = process.env['APPDATA'];
+        childEnv['TMP'] = process.env['TEMP'];
+    }
+    return spawn(cmd,
+                 cargs,
+                 {
+                     stdio: [ 'ignore', autoDeploy.fOut, autoDeploy.fErr, 'pipe'],
+                     env: childEnv
+                 });
 }
 
-function spawnChild(childPath) {
-    autoDeploy.child = spawnChildNoPipe(childPath);
+function spawnChildNoPipe(theChildPath) {
+    return spawnChildNoNode(theChildPath, 'node');
+}
+
+function spawnChild(theChildPath) {
+    autoDeploy.child = spawnChildNoPipe(theChildPath);
     autoDeploy.child.stdio[3].on('data', autoDeploy.handleCommand);
 }
 
-autoDeploy.doRestart = function doRestart(childPath) {
-    spawnChild(childPath);
-    console.log("Re-starting server... ["+childPath+"] PID:", autoDeploy.child.pid);
-}
+autoDeploy.doRestart = function doRestart(theChildPath) {
+    spawnChild(theChildPath);
+    console.log("Re-starting server... ["+theChildPath+"] PID:", autoDeploy.child.pid);
+};
 
-autoDeploy.handleCommand = function handleCommand(msg) {
-    Promises.start(function() {
-        return autoDeploy.initVars();
-    }).then(function(vars) {
-        var cmd=decodeURI(msg.toString("utf8"));
-        var restart = true;
-        if(cmd in vars.commands) {
-            autoDeploy.child.on('exit', function() {
-                console.log("child exits");
-                var runCmd = vars.commands[cmd];
-                console.log("Procesando ", cmd);
-                if('exit' != runCmd) { // solo si hay que reiniciar
-                    if('nop' === runCmd) {
-                        autoDeploy.doRestart(vars.server);
-                    } else { // tenemos algo que ejecutar
-                        var chld = spawnChildNoPipe(runCmd);
-                        chld.on('exit', function() {
-                           autoDeploy.doRestart(vars.server); 
-                        });
-                        chld.on('error', function(err) {
-                           console.log(runCmd+' error:', err);
-                           autoDeploy.doRestart(vars.server);
-                        });
-                    }
-                }
-            });
-            process.kill(autoDeploy.child.pid);
-        } else { console.log("command not in list: ", cmd); }
-    }).catch(function(err) {
-        console.log("handleCommand: ERROR", err, err.stack);
+autoDeploy.parseParams = function parseParams(params) {
+    console.log("startServer", params);
+    autoDeploy.childPath = params.serverPath;
+    if(params.logFile) {
+        console.log("Using '"+params.logFile+"'");
+        autoDeploy.fOut = fs.openSync(params.logFile, 'a');
+        autoDeploy.fErr = fs.openSync(params.logFile, 'a');
+    }
+};
+
+function runCmd(cmd, done){
+    console.log("RUNNING:", cmd);
+    var p = spawnChildNoNode(cmd)
+    p.on('exit', function(code){
+        var err = null;
+        if (code) {
+            err = new Error('command "'+ cmd +'" exited with wrong status code "'+ code +'"');
+            err.code = code;
+            err.cmd = cmd;
+        }
+        if (done) done(err);
     });
-}
-
-autoDeploy.startServer = function startServer() {
-    Promises.start(function() {
-        return autoDeploy.initVars();
-    }).then(function(vars) {
-        console.log("Starting server... ["+vars.server+"]");
-        spawnChild(vars.server);
-    }).catch(function(err) {
-        console.log("startServer: ERROR", err, err.stack);
+    p.on('error', function(err) {
+        if(done) {
+            done(err);
+        } else {
+            console.log("Command Error:", err)
+        }
     });
 };
 
-autoDeploy.install = function install(app) {
-    return Promises.start(function() {
-        return autoDeploy.initVars();
-    }).then(function(vars) {
-        console.log("Installing auto-deploy...");
-        app.adHandler = function(req, res) {
-            var laPipa = fs.createWriteStream(null,{fd: 3});
-            for(var cmd in vars.commands) {
-                if(cmd in req.query) {
-                    laPipa.write(cmd);
-                    break;
-                }
-            }
-        }
-        app.get('/auto-deploy', app.adHandler);
-    }).catch(function(err) {
-        console.log("install: ERROR", err, err.stack);
-    });
+function runAll(cmds, done) {
+    var next = function() {
+        runCmd(cmds.shift(), function(err) {
+           if(err){
+               done(err);
+           } else {
+               if(cmds.length) {
+                   next();
+               } else {
+                   done(null);
+               }
+           }
+        });
+    };
+    next();
 }
 
-autoDeploy.getLinks = function getLinks() {
-    return Promises.start(function() {
-        return autoDeploy.initVars();
-    }).then(function(vars) {
-        var links='';
-        var extraParam = '';
-        if(vars.param) {
-            for(var p in vars.param) {
-                extraParam += '&' + p + '=' + vars.param[p];
-            }
+autoDeploy.handleCommand = function handleCommand(msg) {
+    var cmd=decodeURI(msg.toString("utf8"));
+    var restart = true;
+    autoDeploy.child.on('exit', function() {
+        if(cmd === 'restart') {
+            var cmds=autoDeploy.commands.slice(0); // hacemos una copia
+            runAll(cmds, function(err) {
+                if(err) { console.log("Error: ", err); }
+                autoDeploy.doRestart(autoDeploy.childPath);
+            });
         }
-        for(var cmd in vars.commands) {
-            links += '<a href="/auto-deploy?'+ encodeURI(cmd + extraParam) + '">' + cmd + '</a>|';
-        }
-        return links.substr(0, links.length-1);
-    }).catch(function(err) {
-        console.log("getLinks: ERROR", err, err.stack);
     });
+    process.kill(autoDeploy.child.pid);
+}
+
+autoDeploy.startServer = function startServer(params) {
+    autoDeploy.parseParams(params);
+    console.log("Starting server... ["+autoDeploy.childPath+"]");
+    spawnChild(autoDeploy.childPath);
+};
+
+autoDeploy.middleware = function middleware(opts){
+    if(process.env['AUTODEPLOY_PARENT'] !== 'auto-deploy-runner.js') {
+        throw new Error('An auto-deploy client should be started with auto-deploy-runner.js');
+    }
+    var pid=opts.pid || process.pid;
+    return function(req, res) {
+        if(req.query.pid && req.query.pid == pid) {
+            var laPipa = fs.createWriteStream(null,{fd: 3});
+            if('stop' in req.query) {
+                laPipa.write('stop');
+            } else if('restart' in req.query) {
+                laPipa.write('restart');
+            } else {
+                console.log("Ups!");
+            }
+        }// else { console.log("no ejecuto"); }
+    };
 };
 
 exports = module.exports = autoDeploy;

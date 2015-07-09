@@ -19,27 +19,18 @@ also available in:
 
 <!--lang:en-->
 # Use
-Setup options in package.json
+
+Add launch line to package.json
 
 <!--lang:es--]
 # Uso
-Definir opciones en package.json
+Agregar la linea de inicio al package.json
 
 [!--lang:*-->
 ```json
 {
   "scripts": {
-    "auto-deploy": "auto-deploy-run"
-  },
-  "auto-deploy": {
-    "server": "node example/server.js",
-    "log": false,
-    "logFile": "./server.log",
-    "commands":
-        {"update": "git pull",
-         "restart": "nop",
-         "stop": "exit"},
-    "param": {"pid" : "3344"}
+    "auto-deploy": "auto-deploy-run server/server.js"
   }
 }
 
@@ -56,7 +47,27 @@ Usar el módulo en tu servidor
 ```js
 var autoDeploy = require('auto-deploy');
 
-autoDeploy.install(app);
+app.use('/tools', autoDeploy.middleware({pid:12345}));
+
+```
+
+<!--lang:en-->
+
+To log into a text file you can pass the filename as an argument
+to auto-deploy-run, for example:
+
+<!--lang:es--]
+
+Para guardar mensajes en un archivo de texto puedes pasarle el
+archivo como argumento a auto-deploy-run, por ejemplo:
+
+[!--lang:*-->
+```json
+{
+  "scripts": {
+    "auto-deploy": "auto-deploy-run -l server.log server/server.js"
+  }
+}
 
 ```
 
@@ -82,23 +93,13 @@ Luego en la URL del navegador ejecutar comandos, por ejemplo:
 
 [!--lang:*-->
 
-`http://theserver.zzz/tools/auto-deploy?update`
-
 `http://theserver.zzz/tools/auto-deploy?restart`
 
 `http://theserver.zzz/tools/auto-deploy?stop&pid=3344`
 
 <!--lang:en-->
 
-# main goal
-
-To have the possibility to specify in the address bar of the browser the need to install a new version:
-* auto deploy by URL (GET request)
-* the server executes a `stop` (as clean as possible)
-* the server runs `git pull`, `svn update`, etc
-* the server executes `npm start --production` or similar command
-
-# improvements
+# possible improvements
 
 * the servers checks the local repository to ensure it's cleaness (to prevent conflicts with the `git pull`)
 * the possibility to register a function that checks the integrity and status of the server. 
@@ -107,14 +108,7 @@ To have the possibility to specify in the address bar of the browser the need to
 
 <!--lang:es--]
 
-# objetivo principal
-
-Poder especificar en la barra de direcciones del navegador que se desea instalar una nueva versión:
-* el servidor hace un `stop` (de la manera más limpia posible)
-* el servidor corre `git pull`, `svn update`, etc
-* el servidor corre un `npm start --production` u otro comando similar
-
-## mejoras
+## mejoras posibles
 
 * el servidor revisa primero que no haya nada sucio (para que no haya peligro de que dé conflictos al bajar)
 * poder registrar una función que indique si es seguro matar el servidor 

@@ -3,13 +3,8 @@ var app = express();
 var fs = require('fs');
 var autoDeploy = require('../auto-deploy.js');
 
-var adlinks = '';
-autoDeploy.getLinks().then(function(links) {
-   var urls=links.split('|');
-   for(var i=0; i<urls.length; ++i) {
-       adlinks += '<li>'+urls[i]+'\n';
-   }
-});
+var apUrl='/tools';
+var apPID=12345;
 
 var server = app.listen(5555, function() {
     console.log('-------------------------------------------');
@@ -19,10 +14,12 @@ var server = app.listen(5555, function() {
 function site_up(req,res){
     res.send("<h1>auto-deploy demo</h1><p> Running with PID:<b>"+process.pid+"</b>"
             +"<p>this site now is up"
-            +"<p>Your options:\n"+adlinks);
+            +"<p>Your options:\n"
+            +'  <li>Restart: <a href="'+apUrl+'/auto-deploy?restart&pid='+apPID+'">Restart</a>\n'
+            +'  <li>Restart: <a href="'+apUrl+'/auto-deploy?stop&pid='+apPID+'">Stop</a>\n');
 }
 
 app.get('/index.html',site_up);
 app.get('/',site_up);
 
-autoDeploy.install(app);
+app.use(apUrl, autoDeploy.middleware({pid:12345}));
