@@ -99,6 +99,28 @@ Luego en la URL del navegador ejecutar comandos, por ejemplo:
 
 <!--lang:en-->
 
+# main goal
+
+To have the possibility to specify in the address bar of the browser the need to install a new version:
+* auto deploy by URL (GET request)
+* the server executes a `stop` (as clean as possible)
+* the server updates `git pull` or `svn update`, etc
+* the server installs the new version `npm prune`, `npm install`
+* the server executes `npm start --production` or similar command
+
+<!--lang:es--]
+
+
+# objetivo principal
+
+Poder especificar en la barra de direcciones del navegador que se desea instalar una nueva versión:
+* el servidor hace un `stop` (de la manera más limpia posible)
+* el servidor actualiza `git pull` ó `svn update`, etc
+* el servidor instala `npm prune`, `npm install`
+* el servidor corre un `npm start --production` u otro comando similar
+
+[!--lang:en-->
+
 # possible improvements
 
 * the servers checks the local repository to ensure it's cleaness (to prevent conflicts with the `git pull`)

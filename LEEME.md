@@ -76,6 +76,16 @@ Luego en la URL del navegador ejecutar comandos, por ejemplo:
 `http://theserver.zzz/tools/auto-deploy?stop&pid=3344`
 
 
+
+# objetivo principal
+
+Poder especificar en la barra de direcciones del navegador que se desea instalar una nueva versión:
+* el servidor hace un `stop` (de la manera más limpia posible)
+* el servidor actualiza `git pull` ó `svn update`, etc
+* el servidor instala `npm prune`, `npm install`
+* el servidor corre un `npm start --production` u otro comando similar
+
+
 ## mejoras posibles
 
 * el servidor revisa primero que no haya nada sucio (para que no haya peligro de que dé conflictos al bajar)
